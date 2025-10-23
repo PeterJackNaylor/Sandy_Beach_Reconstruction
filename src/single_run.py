@@ -323,7 +323,7 @@ def plot_optuna(study, name):
     fig = optuna.visualization.plot_param_importances(study)
     fig.write_image(f"{name}/optuna/{name}" + "_important_params.png")
 
-
+path = "/lustre/projects/1001/u10010004/data/data_mathilda"
 def main():
     opt = parser_f()
 
@@ -333,7 +333,7 @@ def main():
     else:
         encoding = False
     # data = load_data("data/4dinr_synthetic_data.h5")
-    data, index = load_data_faster(keyword)
+    data, index = load_data_faster(keyword, path)
 
     data_train, data_test, idx = split_test(data, index)
     model_hp = setup_hp(
@@ -372,7 +372,7 @@ def main():
     # time_preds = plot(data, NN, opt.name, 0, True)  # 0 is trial
     metrics = evaluation(NN, opt.name, encoding)
     metrics_test = evaluation_test(NN, data_test, opt.name, encoding)
-    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword)
+    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
     evaluation_with_change(NN, change_data, opt.name, encoding)
     evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding)
     # import pdb; pdb.set_trace()
@@ -388,7 +388,7 @@ def main_sr():
         encoding = True
     else:
         encoding = False
-    data, index = load_data_faster(keyword)
+    data, index = load_data_faster(keyword, path)
 
     data_train, data_test, idx = split_test(data, index)
     model_hp = setup_hp(
@@ -401,7 +401,7 @@ def main_sr():
     plot_NN(NN, model_hp, opt.name)
     metrics = evaluation(NN, opt.name, encoding)
     metrics_test = evaluation_test(NN, data_test, opt.name, encoding, feats=False, suffix="test_last")
-    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword)
+    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
     # evaluation_with_change(NN, change_data, opt.name, encoding, suffix="test_last")
     evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding, suffix="test_last")
     # import pdb; pdb.set_trace()
@@ -425,7 +425,7 @@ def eval_main():
         encoding = True
     else:
         encoding = False
-    data, index = load_data_faster(keyword)
+    data, index = load_data_faster(keyword, path)
 
     data_train, data_test, idx = split_test(data, index)
     model_hp = setup_hp(
@@ -444,7 +444,7 @@ def eval_main():
     NN = load_model(model_hp, weights, npz, data, index, encoding)
     # metrics = evaluation(NN, opt.name, encoding)
     # metrics_test = evaluation_test(NN, data_test, opt.name, encoding)
-    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword)
+    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
     # change_data, ts_pts, ts_gt, uncert_data, uncert_t = load_eval_data_faster(keyword)
     # evaluation_with_change(NN, change_data, opt.name, encoding)
     # evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, opt.name, encoding)

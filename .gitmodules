@@ -1,0 +1,3 @@
+[submodule "INR4torch"]
+	path = INR4torch
+	url = https://github.com/PeterJackNaylor/INR4torch
