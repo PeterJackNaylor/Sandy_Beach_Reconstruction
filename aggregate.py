@@ -8,5 +8,4 @@ for file in csv:
     df.index = [file.split("/")[1]]
     files.append(df)
 df = pd.concat(files)
-import pdb; pdb.set_trace()
 df.to_csv("outputs/aggregate.csv")

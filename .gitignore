@@ -203,5 +203,7 @@ data
 .nextflow/
 work
 **.tar.gz
-outputs
-outputs_251025
+outputs*/
+.DS_Store
+bilinear_interpolation_results*.csv
+__pycache__/

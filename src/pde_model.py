@@ -67,24 +67,9 @@ class Surface(pinns.DensityEstimator):
             t = pinns.gen_uniform(
                 bs,
                 self.device,
-                # start=0,
-                # end=1,
                 temporal_scheme=temporal_scheme,
                 M=M,
             )
-            # if self.need_hessian:
-            #     (
-            #         grad_lat,
-            #         grad_lon,
-            #         grad_t,
-            #         grad_lat2,
-            #         grad_lon2,
-            #         grad_lonlat,
-            #     ) = spatial_temporal_grad(self.model, t, Lat, Lon, True)
-            #     self.grad_lon2 = grad_lat2
-            #     self.grad_lat2 = grad_lon2
-            #     self.grad_lonlat = grad_lonlat
-            # else:
             grad_lat, grad_lon, grad_t = spatial_temporal_grad(
                 self.model, t, Lat, Lon
             )

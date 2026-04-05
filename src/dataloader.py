@@ -16,11 +16,10 @@ def load_data(filename):
         y = list(f[y_str])
         z = list(f[z_str])
         data = np.column_stack((time, x, y, z))
-        import pdb; pdb.set_trace()
     return data
 
 
-def load_data_faster(opt = "default", path="/home/mletard/compute/4dinr/data"):
+def load_data_faster(opt="default", path="/lustre/projects/1001/u10010004/data/data_mathilda"):
     if opt == 'default':
         filename = "data/data_simu.npy"
         return np.load(filename), None
@@ -71,7 +70,7 @@ def load_data_faster(opt = "default", path="/home/mletard/compute/4dinr/data"):
     return np.load(filename), np.load(filename_index)
 
 
-def load_eval_data_faster(opt, path="/home/mletard/compute/4dinr/data"):
+def load_eval_data_faster(opt, path="/lustre/projects/1001/u10010004/data/data_mathilda"):
     if "seasonal" in opt:
         change_data = path+"/bitemporal_change_seasonal_beach.npy"
         time_series = path+"/seasonal_beach_timeseries.npy"

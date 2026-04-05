@@ -1,6 +1,4 @@
 import os
-# import sys 
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'INR4Torch')))
 import argparse
 import pinns
 import pandas as pd
@@ -13,7 +11,7 @@ import matplotlib.pylab as plt
 import matplotlib.cm as cm
 from pinns.models import INR
 from datetime import datetime
-from dataloader import return_dataset, load_data, load_data_faster, load_eval_data_faster
+from dataloader import return_dataset, load_data_faster, load_eval_data_faster
 from pde_model import Surface
 from tqdm import tqdm 
 from shutil import copy 
@@ -68,7 +66,6 @@ def parser_f():
         help="File with test indexes, only to use with specific datasets",
     )
     args = parser.parse_args()
-    # args.name = f"outputs/{args.name}"
     return args
 
 
@@ -87,8 +84,6 @@ def setup_hp(
     model_hp = pinns.read_yaml(yaml_params)
     model_hp.model["name"] = model_name
     gpu = torch.cuda.is_available()
-    # device = "cuda" if gpu else "cpu"
-
     n = int(data.shape[0] * model_hp.train_fraction)
     bs = model_hp.losses["mse"]["bs"]
 
@@ -105,10 +100,6 @@ def setup_hp(
     model_hp.cosine_anealing["step"] = ceil(n // bs) * model_hp.cosine_anealing["epoch"]
     model_hp.gpu = gpu
     model_hp.verbose = True
-    # model_hp.model["name"] = model
-    # model_hp.model["scale"] = scale
-    # model_hp.pth_name = f"{name}.pth"
-    # model_hp.npz_name = f"{name}.npz"
     return model_hp
 
 
@@ -198,17 +189,9 @@ def split_test(data, index):
 
 
 def sample_hp(hp, trial):
-    # hp.model["epochs"] = trial.suggest_int("epochs", 50, 400, log=True)
-    # hp.model["epochs"] = 300 # trial.suggest_categorical('epochs', [300])
     if "RFF" in hp.model["name"]:
         hp.model["mapping_size"] = trial.suggest_categorical('mapping_size', [64, 128, 256, 512, 1024])
     hp.lr = 1e-3
-                # trial.suggest_float(
-                #     "lr",
-                #     1e-4,
-                #     1e-2,
-                #     log=True,
-                # )
     hp.model["scale"] = trial.suggest_float("scale", 1e-2, 10, log=True)
     if hp.model["name"] != "SIREN":
         hp.model["scale_time"] = trial.suggest_float("scale_time", 1e-1, 100, log=True)
@@ -312,7 +295,6 @@ def get_n_best_trials(study):
 
 def load_model(model_hp, weights, npz_path, data, index, encoding):
     npz = np.load(npz_path, allow_pickle=True)
-    # import pdb; pdb.set_trace()
     model_hp.model["name"] = npz["model"].item()["name"]
     model_hp.input_size = int(npz["input_size"])
     model_hp.output_size = int(npz["output_size"])
@@ -362,7 +344,6 @@ def main():
         encoding = True
     else:
         encoding = False
-    # data = load_data("data/4dinr_synthetic_data.h5")
     data, index = load_data_faster(keyword, path)
 
     data_train, data_test, idx = split_test(data, index)
@@ -400,7 +381,6 @@ def main():
     )
     model_hp.device = "cuda" if model_hp.gpu else "cpu"
     NN = load_model(model_hp, weights, npz, data, index, encoding)
-    # time_preds = plot(data, NN, opt.name, 0, True)  # 0 is trial
     metrics = evaluation(NN, opt.name, encoding)
     metrics_test = evaluation_test(NN, data_test, opt.name, encoding)
     save_results(metrics + metrics_test, opt.name)
@@ -409,8 +389,8 @@ def main():
         change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
         evaluation_with_change(NN, change_data, opt.name, encoding)
         evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding)
-    except:
-        pass# import pdb; pdb.set_trace()
+    except Exception:
+        pass
 
 
 def main_sr():
@@ -437,18 +417,7 @@ def main_sr():
     change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
     # evaluation_with_change(NN, change_data, opt.name, encoding, suffix="test_last")
     evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding, suffix="test_last")
-    # import pdb; pdb.set_trace()
     save_results(metrics + metrics_test, opt.name, suffix="last")
-
-    # npz = f"{opt.name}/{opt.name}.npz"
-    # weights = f"{opt.name}/{opt.name}.pth"
-    # model_hp.device = "cuda" if model_hp.gpu else "cpu"
-    # NN = load_model(model_hp, weights, npz, data, index, encoding)
-    # metrics = evaluation(NN, opt.name, encoding)
-    # metrics_test = evaluation_test(NN, data_test, opt.name, encoding, feats=False, suffix="test_best")
-    # # evaluation_with_change(NN, change_data, opt.name, encoding, suffix="test_best")
-    # evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding, suffix="test_best")
-    # save_results(metrics + metrics_test, opt.name, suffix="best")
 
 
 def eval_main():
@@ -469,21 +438,10 @@ def eval_main():
 
     npz = f"{opt.name}/{opt.name}.npz"
     weights = f"{opt.name}/{opt.name}.pth"
-    # OR
-    # npz = f"{opt.name}/multiple/optuna_{167}.npz"
-    # weights = f"{opt.name}/multiple/optuna_{167}.pth"
-    
     model_hp.device = "cuda" if model_hp.gpu else "cpu"
     NN = load_model(model_hp, weights, npz, data, index, encoding)
-    # metrics = evaluation(NN, opt.name, encoding)
-    # metrics_test = evaluation_test(NN, data_test, opt.name, encoding)
     change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
-    # change_data, ts_pts, ts_gt, uncert_data, uncert_t = load_eval_data_faster(keyword)
-    # evaluation_with_change(NN, change_data, opt.name, encoding)
-    # evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, opt.name, encoding)
     evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding)
-    # 
-    # save_results(metrics + metrics_test, opt.name)
 
 
 if __name__ == "__main__":

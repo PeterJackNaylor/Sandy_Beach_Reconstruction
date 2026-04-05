@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from datetime import datetime
 from datetime import datetime, timedelta
 from tqdm import tqdm 
 from pc_utils import *
@@ -104,7 +103,7 @@ def evaluation_test(model, data, name, encoding, feats=True, suffix="test"):
     # RMSE
     rmse_test = rmse(torch.tensor(test_targets).cuda(), test_pred)
 
-    if False:#feats:
+    if feats:
         test_pred = test_pred.flatten().cpu().float().detach().numpy()
         true_xyz = data[:, [-3,-2,-1]]
         pred_xyz = np.concatenate((data[:,[-3,-2]], test_pred.reshape((-1,1))), axis=1)
@@ -160,7 +159,6 @@ def evaluation_with_change(model, change_data, name, encoding, suffix="test"):
 
 
 def evaluation_timeseries(model, data, ts_gt, uncert_data, uncert_time, zmean, zstd, tmean, name, encoding, n_plots=10, suffix="test"):
-# def evaluation_timeseries(model, data, ts_gt, uncert_data, uncert_time, name, encoding, n_plots=10, suffix="test"):
     elevations_true = ts_gt.distances
     elevations_uncertainty = uncert_data
     timestamps = np.array(([t + ts_gt.reference_epoch.timestamp for t in ts_gt.timedeltas]))
