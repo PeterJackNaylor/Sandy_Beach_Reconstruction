@@ -1,6 +1,6 @@
 #training
 # max_iters: 2000 #00 #180 #00
-epochs: 100
+epochs: 300
 normalise_targets: True
 test_epochs: 1
 # test_frequency: 500 # 1000
@@ -12,7 +12,7 @@ seed: 42
 model:
   name: RFF_st #or RFF/RFF_st/SIREN/WIRES/MFN
   hidden_nlayers: 5 #5
-  hidden_width: 256 #256
+  hidden_width: 128 #256
   scale: 0.1 #5 #for SIREN: 30
   scale_time: 1.5 #1.5 #3 #1.5 #or None
   skip: False
@@ -53,22 +53,22 @@ losses:
   #   temporal_causality: True
   #   bs: 8192 # 8192 # 16384 # 32768 # powers of 2 only
   #   method: periodicity
-  # gradient_lat:
-  #   report: True
-  #   log: True
-  #   lambda: 1
-  #   temporal_causality: False
-  #   bs: 8192 # 8192 #16384 # 65536 #32768 # 8192 # √ # powers of 2 only
-  #   method: gradient_lat
-  #   loss_balancing: False #wether to be included in loss balancing
-  # gradient_lon:
-  #   report: True
-  #   log: True
-  #   lambda: 1
-  #   temporal_causality: False
-  #   bs: 8192 # 8192 #16384 # 65536 #32768 # 8192 # √ # powers of 2 only
-  #   method: gradient_lon
-  #   loss_balancing: False #wether to be included in loss balancing
+  gradient_lat:
+    report: True
+    log: True
+    lambda: 1
+    temporal_causality: False
+    bs: 8192 # 8192 #16384 # 65536 #32768 # 8192 # √ # powers of 2 only
+    method: gradient_lat
+    loss_balancing: False #wether to be included in loss balancing
+  gradient_lon:
+    report: True
+    log: True
+    lambda: 1
+    temporal_causality: False
+    bs: 8192 # 8192 #16384 # 65536 #32768 # 8192 # √ # powers of 2 only
+    method: gradient_lon
+    loss_balancing: False #wether to be included in loss balancing
   temporal_grad:
     report: True
     log: True
@@ -97,7 +97,7 @@ relobralo:
   rho: 0.5
   step: 100
 
-self_adapting_loss_balancing:
+self_adapting_loss_balancing: #gradnorm
   status: True
   alpha: 0.9
   step: 1000 #1000 #update
@@ -119,7 +119,7 @@ learning_rate_decay:
   status: True
   # step: 2000
   epoch: 10
-  gamma: 0.98 # 0.9
+  gamma: 0.9 # 0.9
 
 cosine_anealing:
   status: False

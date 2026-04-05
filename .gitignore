@@ -198,3 +198,10 @@ pyrightconfig.json
 *.npz
 *.csv
 *.yml
+*.log.*
+data
+.nextflow/
+work
+**.tar.gz
+outputs
+outputs_251025

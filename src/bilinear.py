@@ -65,6 +65,7 @@ def evaluate_model(support, z, new_locations, delta=15, downsample=1):
                 z[idx][::downsample],
                 new_locations[:, 1:][idx_new],
                 method="linear",
+                rescale=True
             )
     return z_hat
 
@@ -85,6 +86,7 @@ def load_data_faster(opt = "default"):
 
 def load_data_faster2(filename):
     filename = "data/" + filename
+    print(filename)
     return np.load(filename), np.load(filename.replace(".npy", "_split.npy"))
 
 def split_test(data, index):
@@ -98,23 +100,22 @@ def split_test(data, index):
 def datasets():
 
     pairs = [
-        ("daily_beach_spatial.npy", 7, 10),
-        ("daily_beach_temporal.npy", 7, 10),
-        ("seasonal_beach_spatial.npy", 90, 10),
-        ("seasonal_beach_temporal.npy", 90, 10),
-        ("monthly_beach_spatial.npy", 30, 10),
-        ("monthly_beach_temporal.npy", 30, 10),
-        ("weekly_beach_spatial.npy", 7, 10),
-        ("weekly_beach_temporal.npy", 7, 10),
+        ("daily_beach_spatial.npy", 2, 1),
+        ("daily_beach_temporal.npy", 2, 1),
+        ("seasonal_beach_spatial.npy", 99, 1),
+        ("seasonal_beach_temporal.npy", 99, 1),
+        ("monthly_beach_spatial.npy", 35, 1),
+        ("monthly_beach_temporal.npy", 35, 1),
+        ("weekly_beach_spatial.npy", 9, 1),
+        ("weekly_beach_temporal.npy", 9, 1),
         
     ]  # (filename, delta, downsample)
 
     for name, delta, ds in pairs:
-        
+        print(name)
         data, index = load_data_faster2(name)
-
         data_train, data_test, idx = split_test(data, index)
-        s_train, z_train, s_test, z_test = data_train[:, :3], data_train[:, 3], data_test[:, :3], data_test[:, 3]
+        s_train, z_train, s_test, z_test = data_train[:, [0,-3,-2]], data_train[:, -1], data_test[:, [0,-3,-2]], data_test[:, -1]
 
         yield s_train, z_train, s_test, z_test, delta, ds, name.replace(".npy", "")
 
@@ -123,12 +124,13 @@ def main():
 
     results = pd.DataFrame(columns=["MAE", "MED", "STD"])
     for s_train, z_train, s_test, z_test, delta, ds, name in datasets():
+        print(name)
         z_hat = evaluate_model(s_train, z_train, s_test, delta=delta, downsample=ds)
         mae = np.nanmean(np.abs(z_hat - z_test))
         med = np.nanmedian(z_hat - z_test)
         std = np.nanstd(z_hat - z_test)
         results.loc[name] = [mae, med, std]
-    results.to_csv(f"bilinear_interpolation_results.csv")
+        results.to_csv(f"bilinear_interpolation_results.csv")
 
 
 if __name__ == "__main__":

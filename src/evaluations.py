@@ -65,16 +65,16 @@ def evaluation(model, name, encoding):
     mae_all = mae(all_targets, all_predictions)
 
     plot_pc(test_targets.flatten().cpu().float().numpy(), 
-            test_predictions.flatten().cpu().float().numpy(), 
+            test_predictions.flatten().cpu().float().detach().numpy(), 
             model.test_set.samples.cpu().numpy(), model.data.nv_samples, suffix="validation", name=name)
     test_histo(test_targets.flatten().cpu().float().numpy(), 
-                test_predictions.flatten().cpu().float().numpy(), 
+                test_predictions.flatten().cpu().float().detach().numpy(), 
                 name=name, suffix="validation")
     plot_pc(train_targets.flatten().cpu().float().numpy(), 
-            train_predictions.flatten().cpu().float().numpy(), 
+            train_predictions.flatten().cpu().float().detach().numpy(), 
             model.data.samples.cpu().numpy(), model.data.nv_samples, suffix="train", name=name)
     test_histo(train_targets.flatten().cpu().float().numpy(), 
-            train_predictions.flatten().cpu().float().numpy(),
+            train_predictions.flatten().cpu().float().detach().numpy(),
                 name=name, suffix="train")
     # RMSE
     rmse_train = rmse(train_targets, train_predictions)
@@ -91,22 +91,21 @@ def evaluation_test(model, data, name, encoding, feats=True, suffix="test"):
     else:
         data_txy = data[:, 1:-1].copy()
         test_targets = data[:, -1:]
-    
     model.test_set.normalize(data_txy, model.test_set.nv_samples, True)
     z_pred = predict(torch.tensor(data_txy).cuda().float(), model)
     z_nrm = model.data.nv_targets[0]
     test_pred = z_pred * z_nrm[1] + z_nrm[0]
     mae_test = mae(torch.tensor(test_targets).cuda(), test_pred)
     plot_pc(test_targets, 
-                test_pred.flatten().cpu().float().numpy(), 
+                test_pred.flatten().cpu().float().detach().numpy(), 
                 data_txy, model.data.nv_samples, suffix=suffix, name=name)
     test_histo(test_targets, 
-                test_pred.flatten().cpu().float().numpy(), name, suffix=suffix)
+                test_pred.flatten().cpu().float().detach().numpy(), name, suffix=suffix)
     # RMSE
     rmse_test = rmse(torch.tensor(test_targets).cuda(), test_pred)
 
-    if feats:
-        test_pred = test_pred.flatten().cpu().float().numpy()
+    if False:#feats:
+        test_pred = test_pred.flatten().cpu().float().detach().numpy()
         true_xyz = data[:, [-3,-2,-1]]
         pred_xyz = np.concatenate((data[:,[-3,-2]], test_pred.reshape((-1,1))), axis=1)
         scale = 1.0
@@ -125,6 +124,7 @@ def evaluation_test(model, data, name, encoding, feats=True, suffix="test"):
         plot_feature(rough_gt, rough_pred, data_txy[idx_2], model.data.nv_samples, scale, suffix=suffix, name=name, feat_name="Roughness", down=False)
         plot_feature(dzdx_true, dzdx_pred, data_txy[idx_2], model.data.nv_samples, scale, suffix=suffix, name=name, feat_name="DzDx", down=False)
         plot_feature(dzdy_true, dzdy_pred, data_txy[idx_2], model.data.nv_samples, scale, suffix=suffix, name=name, feat_name="DzDy", down=False)
+        
         scale = 5.0
         rough_gt, dzdx_true, dzdy_true = get_roughness(corepoints, true_xyz, scale)
         rough_pred, dzdx_pred, dzdy_pred = get_roughness(corepoints_pred, pred_xyz, scale) #::10

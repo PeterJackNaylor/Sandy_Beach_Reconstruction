@@ -53,6 +53,11 @@ def parser_f():
         help="Configuration yaml file for the INR hyper-parameters",
     )
     parser.add_argument(
+        "--model_name",
+        type=str,
+        help="keyword: RFF, RFF_st, or KAN",
+    )
+    parser.add_argument(
         "--keyword",
         type=str,
         help="keyword: seasonal, default",
@@ -71,6 +76,7 @@ def setup_hp(
     yaml_params,
     data,
     name,
+    model_name,
 ):
     try:
         os.mkdir(name)
@@ -79,11 +85,18 @@ def setup_hp(
 
     copy(yaml_params, f"{name}/used_config.yml")
     model_hp = pinns.read_yaml(yaml_params)
+    model_hp.model["name"] = model_name
     gpu = torch.cuda.is_available()
     # device = "cuda" if gpu else "cpu"
 
     n = int(data.shape[0] * model_hp.train_fraction)
     bs = model_hp.losses["mse"]["bs"]
+
+    if model_name == "KAN":
+        model_hp.model["hidden_width"] = 32
+        model_hp.model["hidden_nlayers"] = 4
+        model_hp.optuna["trials"] = 50
+        model_hp.epochs = 50
     model_hp.max_iters = ceil(n // bs) * model_hp.epochs
     model_hp.test_frequency = ceil(n // bs) * model_hp.test_epochs
     model_hp.learning_rate_decay["step"] = (
@@ -186,16 +199,24 @@ def split_test(data, index):
 
 def sample_hp(hp, trial):
     # hp.model["epochs"] = trial.suggest_int("epochs", 50, 400, log=True)
-    hp.model["epochs"] = trial.suggest_categorical('epochs', [25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400])
-    hp.model["mapping_size"] = trial.suggest_categorical('mapping_size', [128,256,512])
-    hp.lr = trial.suggest_float(
-                    "lr",
-                    1e-4,
-                    1e-2,
-                    log=True,
-                )
-    hp.model["scale"] = trial.suggest_float("scale", 1e-2, 5, log=True)
-    hp.model["scale_time"] = trial.suggest_float("scale_time", 1e-2, 5, log=True)
+    # hp.model["epochs"] = 300 # trial.suggest_categorical('epochs', [300])
+    if "RFF" in hp.model["name"]:
+        hp.model["mapping_size"] = trial.suggest_categorical('mapping_size', [64, 128, 256, 512, 1024])
+    hp.lr = 1e-3
+                # trial.suggest_float(
+                #     "lr",
+                #     1e-4,
+                #     1e-2,
+                #     log=True,
+                # )
+    hp.model["scale"] = trial.suggest_float("scale", 1e-2, 10, log=True)
+    if hp.model["name"] != "SIREN":
+        hp.model["scale_time"] = trial.suggest_float("scale_time", 1e-1, 100, log=True)
+    if hp.model["name"] == "KAN":
+        hp.model["hidden_width"] = 32
+        hp.model["hidden_nlayers"] = 4
+        hp.optuna["trials"] = 50
+        hp.model["epochs"] = 50
     hp.losses["gradient_lat"]["lambda"] = trial.suggest_float(
                     "lambda_lat",
                     1e-2,
@@ -204,6 +225,12 @@ def sample_hp(hp, trial):
                 )
     hp.losses["gradient_lon"]["lambda"] = trial.suggest_float(
                     "lambda_lon",
+                    1e-2,
+                    10,
+                    log=True,
+    )
+    hp.losses["temporal_grad"]["lambda"] = trial.suggest_float(
+                    "lambda_time",
                     1e-2,
                     10,
                     log=True,
@@ -255,6 +282,7 @@ def single_run(
         yaml_params,
         data,
         name,
+        model_name
     )
 
     return_dataset_fn = partial(return_dataset, data=data, index=idx, encoding=encoding)
@@ -285,6 +313,7 @@ def get_n_best_trials(study):
 def load_model(model_hp, weights, npz_path, data, index, encoding):
     npz = np.load(npz_path, allow_pickle=True)
     # import pdb; pdb.set_trace()
+    model_hp.model["name"] = npz["model"].item()["name"]
     model_hp.input_size = int(npz["input_size"])
     model_hp.output_size = int(npz["output_size"])
     model_hp.model["mapping_size"] = int(npz["model"].item()["mapping_size"])
@@ -293,6 +322,7 @@ def load_model(model_hp, weights, npz_path, data, index, encoding):
     model_hp.model["hidden_nlayers"] = npz["model"].item()["hidden_nlayers"]
     if model_hp.model["name"] == "KAN":
         model_hp.model["hidden_width"] = npz["model"].item()["hidden_width"]
+        model_hp.model["hidden_nlayers"] = npz["model"].item()["hidden_nlayers"]
     model = INR(
         model_hp.model["name"],
         model_hp.input_size,
@@ -340,8 +370,9 @@ def main():
         opt.yaml_file,
         data_train,
         opt.name,
+        opt.model_name,
     )
-    train_dataloader, val_dataloader = return_dataset(model_hp, data, model_hp.gpu, index, encoding)
+    train_dataloader, val_dataloader = return_dataset(model_hp, data_train, model_hp.gpu, index, encoding)
     def dataset_fn(hp, gpu):
         return train_dataloader, val_dataloader
     objective = partial(objective_optuna, model_hp=model_hp, data_fn=dataset_fn, name=opt.name)
@@ -372,12 +403,14 @@ def main():
     # time_preds = plot(data, NN, opt.name, 0, True)  # 0 is trial
     metrics = evaluation(NN, opt.name, encoding)
     metrics_test = evaluation_test(NN, data_test, opt.name, encoding)
-    change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
-    evaluation_with_change(NN, change_data, opt.name, encoding)
-    evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding)
-    # import pdb; pdb.set_trace()
     save_results(metrics + metrics_test, opt.name)
     plot_optuna(study, opt.name)
+    try:
+        change_data, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean = load_eval_data_faster(keyword, path)
+        evaluation_with_change(NN, change_data, opt.name, encoding)
+        evaluation_timeseries(NN, ts_pts, ts_gt, uncert_data, uncert_t, zmean, zstd, tmean, opt.name, encoding)
+    except:
+        pass# import pdb; pdb.set_trace()
 
 
 def main_sr():
@@ -397,7 +430,7 @@ def main_sr():
         opt.name,
     )
     
-    NN, model_hp = single_run(opt.yaml_file, data, index, opt.name, encoding)
+    NN, model_hp = single_run(opt.yaml_file, data, index, opt.name, encoding, opt.model_name)
     plot_NN(NN, model_hp, opt.name)
     metrics = evaluation(NN, opt.name, encoding)
     metrics_test = evaluation_test(NN, data_test, opt.name, encoding, feats=False, suffix="test_last")
@@ -454,6 +487,6 @@ def eval_main():
 
 
 if __name__ == "__main__":
-    # main()
-    main_sr()
+    main()
+    # main_sr()
     # eval_main()
