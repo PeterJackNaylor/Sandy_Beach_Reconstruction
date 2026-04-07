@@ -11,12 +11,12 @@ This repository trains and evaluates Implicit Neural Representations (INRs) on t
 
 ## Overview
 
-Coastal dunes are surveyed repeatedly by TLS at different cadences (daily to seasonal). Each acquisition produces a dense 3D point cloud. Rather than storing discrete snapshots, we fit an INR — a small MLP — that represents the entire spatio-temporal surface implicitly. This allows:
+A sandy beach is surveyed repeatedly with a TLS at different timescales (daily to seasonal). Each acquisition produces a dense 3D point cloud. Rather than storing discrete snapshots, we fit an INR (a small MLP) that represents the entire spatio-temporal surface implicitly. This allows:
 
 - **Reconstruction** at any (t, x, y) query, including unobserved times
 - **Temporal gap-filling** between acquisitions
 - **Super-resolution** in time and space
-- **Gradient analysis**: spatial slopes and rates of surface change over time
+- **Gradient analysis**: the reconstructed surfaces can be used for further analysis of spatial slopes and rates of surface change over time
 
 Multiple architectures are compared (RFF, RFF_st, SIREN, KAN) across four temporal resolutions (daily, weekly, monthly, seasonal).
 
@@ -25,7 +25,7 @@ Multiple architectures are compared (RFF, RFF_st, SIREN, KAN) across four tempor
 ## Repository Structure
 
 ```
-coastal_mathilda/
+Sandy_Beach_Reconstruction/
 ├── main.nf              # Nextflow workflow: runs all model × dataset combinations
 ├── nextflow.config      # Cluster (PBS) and conda environment configuration
 ├── mathilda.yml         # Hyperparameter configuration
@@ -35,8 +35,8 @@ coastal_mathilda/
 │   ├── single_run.py    # Entry point: Optuna HPO + training + evaluation
 │   ├── dataloader.py    # Data loading and normalisation (TLaLoZC dataset)
 │   ├── evaluations.py   # MAE/RMSE metrics, time-series plots, change analysis
-│   ├── pde_model.py     # Gradient loss terms (spatial + temporal smoothness)
-│   ├── temp_encoding.py # Multi-scale temporal feature encoding
+│   ├── pde_model.py     # Gradient loss terms (spatial + temporal regularization)
+│   ├── temp_encoding.py # Multi-scale temporal encoding
 │   ├── bilinear.py      # Bilinear interpolation baseline
 │   ├── data_script.py   # Preprocessing: LAS → .npy train/val/test splits
 │   ├── pc_utils.py      # Point cloud utilities (roughness, downsampling)
@@ -56,7 +56,7 @@ coastal_mathilda/
 | Name | Description |
 |------|-------------|
 | `RFF` | Random Fourier Features (Tancik et al., 2020) |
-| `RFF_st` | RFF with separate spatio-temporal encodings |
+| `RFF_st` | RFF with separate spatial and temporal encodings |
 | `SIREN` | Sinusoidal Representation Networks (Sitzmann et al., 2020) |
 | `WIRE` | Wavelet-based INR with complex Gabor activations (Saragadam et al., 2023) |
 | `MFN` | Multiplicative Filter Networks (Fathony et al., 2021) |
@@ -87,7 +87,7 @@ Raw LAS files are preprocessed into this format using `src/data_script.py`.
 ```bash
 # Clone with submodule
 git clone --recurse-submodules <repo-url>
-cd coastal_mathilda
+cd Sandy_Beach_Reconstruction
 
 # Create conda environment
 conda env create -f INR4torch/environment.yml   # or use requirements.txt
