@@ -5,7 +5,7 @@ Code for the paper:
 > **Spatiotemporal reconstruction of 4D point clouds at different time scales through implicit neural representations for topographic monitoring applications**  
 > Letard, M.; Naylor, P.; Anders, K. — *ISPRS Annals*, Track TC2: Photogrammetry (Full Paper)
 
-This repository trains and evaluates Implicit Neural Representations (INRs) on time series of Terrestrial Laser Scanning (TLS) point clouds of coastal sandy dunes. The network learns a continuous mapping *(t, x, y) → z* (elevation), enabling 4D surface reconstruction, temporal gap-filling, and super-resolution from sparse, irregular acquisitions.
+This repository trains and evaluates Implicit Neural Representations (INRs) on time series of Terrestrial Laser Scanning (TLS) point clouds of a coastal sandy beach. The network learns a continuous mapping *(t, x, y) → z* (elevation), enabling 4D surface reconstruction, temporal gap-filling, and super-resolution from sparse, irregular acquisitions.
 
 ---
 
@@ -19,6 +19,8 @@ A sandy beach is surveyed repeatedly with a TLS at different timescales (daily t
 - **Gradient analysis**: the reconstructed surfaces can be used for further analysis of spatial slopes and rates of surface change over time
 
 Multiple architectures are compared (RFF, RFF_st, SIREN, KAN) across four temporal resolutions (daily, weekly, monthly, seasonal).
+
+Data source: Vos et al. (2023); https://data.4tu.nl/datasets/1aac46fb-7900-4d4c-a099-d2ce354811d2/2
 
 ---
 
